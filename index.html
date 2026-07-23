@@ -509,6 +509,14 @@
 </style>
 </head>
 <body>
+
+<div id="login-overlay" style="position:fixed; inset:0; background:var(--cream); z-index:200; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center;">
+  <div style="font-family:'DM Serif Display', serif; font-size:26px; color:var(--ink); margin-bottom:4px;">Chef<span style="color:var(--saffron)">Custo</span></div>
+  <p style="font-size:13px; color:var(--ink-muted); margin-bottom:20px;">Acesso restrito — digite a senha</p>
+  <input type="password" id="login-password" class="form-input" placeholder="Senha" style="max-width:280px;" onkeydown="if(event.key==='Enter') tryLogin()">
+  <button class="btn btn-primary" style="max-width:280px; margin-top:10px;" onclick="tryLogin()">Entrar</button>
+  <p id="login-error" style="color:var(--terracotta); font-size:12px; margin-top:10px; display:none;">Senha incorreta, tente de novo.</p>
+</div>
 <div class="phone-shell">
 
   <!-- STATUS BAR -->
@@ -878,15 +886,34 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ── AUTENTICAÇÃO (barreira simples contra acesso casual) ──
+const AUTH_TOKEN = 'ALTERE_ESTA_SENHA'; // use a MESMA senha configurada no Apps Script
+
+function checkAuth() {
+  return sessionStorage.getItem('chefcusto_session') === AUTH_TOKEN;
+}
+
+function tryLogin() {
+  const pass = document.getElementById('login-password').value;
+  if (pass === AUTH_TOKEN) {
+    sessionStorage.setItem('chefcusto_session', AUTH_TOKEN);
+    document.getElementById('login-overlay').style.display = 'none';
+    initApp();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
 // ── API (Google Apps Script conectado à sua planilha) ──
 const API_URL = 'https://script.google.com/macros/s/AKfycbwSj_hSc8BwZrp688OqZmLyd-Dlfmev4AH6pqABWTUb8u85RVwF6dT6FXwWZmrwDWh_/exec';
 
 async function apiGet(action) {
-  const res = await fetch(`${API_URL}?action=${action}`);
+  const res = await fetch(`${API_URL}?action=${action}&token=${encodeURIComponent(AUTH_TOKEN)}`);
   return res.json();
 }
 
 async function apiPost(body) {
+  body.token = AUTH_TOKEN;
   // Content-Type text/plain evita o preflight CORS que o Apps Script não responde
   const res = await fetch(API_URL, {
     method: 'POST',
@@ -1352,7 +1379,12 @@ async function initApp() {
   document.getElementById('stat-recipes').textContent = '...';
   await Promise.all([loadInsumos(), loadFichas()]);
 }
-initApp();
+
+// Só inicia o app se a senha já foi validada nesta sessão do navegador
+if (checkAuth()) {
+  document.getElementById('login-overlay').style.display = 'none';
+  initApp();
+}
 </script>
 </body>
 </html>
