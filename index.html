@@ -1158,8 +1158,15 @@ async function addStock() {
   }
 }
 
-function removeStock(idx) {
-  showToast('Para remover, edite direto na aba Insumos da planilha');
+async function removeStock(id, name) {
+  if (!confirm(`Excluir "${name}" da lista de insumos?`)) return;
+  try {
+    await apiPost({ action: 'delete_insumo', insumoId: id });
+    showToast('Insumo excluído! ✓');
+    await loadInsumos();
+  } catch (e) {
+    showToast('Erro ao excluir. Tente novamente.');
+  }
 }
 
 function renderStock() {
@@ -1179,7 +1186,7 @@ function renderStock() {
         <div class="ing-name">${s.name}</div>
         <div class="ing-detail">R$ ${s.price.toFixed(2)} / ${s.qty}${s.unit} · <strong>R$ ${s.unitPrice.toFixed(4)}/${s.unit}</strong></div>
       </div>
-      <button class="ing-remove" onclick="removeStock(${i})">✕</button>
+      <button class="ing-remove" onclick="removeStock('${s.id}', '${s.name.replace(/'/g, "\\'")}')">✕</button>
     </div>
   `).join('');
   document.getElementById('stat-ings').textContent = stockItems.length;
