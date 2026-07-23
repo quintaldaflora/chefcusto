@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChefCusto — Precificação Inteligente</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #F5F0E8;
+    --cream-dark: #EDE7D9;
+    --ink: #1A1612;
+    --ink-soft: #3D3530;
+    --ink-muted: #7A6E67;
+    --saffron: #E8A020;
+    --saffron-light: #FDF3DE;
+    --saffron-dark: #B87D10;
+    --terracotta: #C4522A;
+    --terracotta-light: #FAECE6;
+    --mint: #2A8C6A;
+    --mint-light: #E3F4EE;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --shadow: 0 2px 12px rgba(26,22,18,0.10);
+    --shadow-lg: 0 8px 32px rgba(26,22,18,0.14);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── PHONE SHELL ── */
+  .phone-shell {
+    width: 390px;
+    min-height: 100vh;
+    background: var(--cream);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── STATUS BAR ── */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .status-icons { display: flex; gap: 6px; align-items: center; }
+  .status-icons span { font-size: 11px; }
+
+  /* ── HEADER ── */
+  .app-header {
+    padding: 6px 20px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--ink);
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--saffron); }
+  .header-badge {
+    background: var(--saffron);
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    display: flex;
+    background: white;
+    border-top: 1px solid var(--cream-dark);
+    padding: 10px 0 20px;
+    position: sticky;
+    bottom: 0;
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    transition: color 0.15s;
+    color: var(--ink-muted);
+    border: none;
+    background: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .nav-item.active { color: var(--saffron); }
+  .nav-icon { font-size: 20px; }
+  .nav-label { font-size: 10px; font-weight: 500; }
+
+  /* ── PAGES ── */
+  .page { display: none; flex-direction: column; flex: 1; overflow-y: auto; padding-bottom: 16px; }
+  .page.active { display: flex; }
+
+  /* ── SECTION TITLE ── */
+  .section-head {
+    padding: 0 20px 12px;
+  }
+  .section-head h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    letter-spacing: -0.5px;
+    color: var(--ink);
+  }
+  .section-head p {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-top: 2px;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: white;
+    border-radius: var(--radius);
+    margin: 0 20px 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .card-inner { padding: 16px; }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .card-subtitle {
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-top: 2px;
+  }
+  .card-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .badge-saffron { background: var(--saffron-light); color: var(--saffron-dark); }
+  .badge-mint { background: var(--mint-light); color: var(--mint); }
+  .badge-terra { background: var(--terracotta-light); color: var(--terracotta); }
+
+  /* ── FORM ELEMENTS ── */
+  .form-group { margin-bottom: 12px; }
+  .form-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .form-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--cream);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  .form-input:focus { border-color: var(--saffron); background: white; }
+  .form-input::placeholder { color: var(--ink-muted); }
+  select.form-input { appearance: none; cursor: pointer; }
+  textarea.form-input { resize: none; min-height: 90px; line-height: 1.5; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+  .btn-primary {
+    background: var(--saffron);
+    color: white;
+    width: 100%;
+  }
+  .btn-primary:hover { background: var(--saffron-dark); }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--cream-dark);
+    color: var(--ink-soft);
+  }
+  .btn-sm {
+    padding: 7px 14px;
+    font-size: 12px;
+    border-radius: 6px;
+  }
+  .btn-danger {
+    background: var(--terracotta-light);
+    color: var(--terracotta);
+  }
+
+  /* ── INGREDIENT LIST ── */
+  .ingredient-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--cream-dark);
+  }
+  .ingredient-item:last-child { border-bottom: none; }
+  .ing-info { flex: 1; }
+  .ing-name { font-size: 14px; font-weight: 500; color: var(--ink); }
+  .ing-detail { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+  .ing-cost {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--mint);
+    background: var(--mint-light);
+    padding: 3px 8px;
+    border-radius: 6px;
+    margin-right: 8px;
+  }
+  .ing-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--ink-muted);
+    font-size: 16px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.15s;
+  }
+  .ing-remove:hover { color: var(--terracotta); }
+
+  /* ── AI RESULT CARD ── */
+  .result-card {
+    background: linear-gradient(135deg, var(--ink) 0%, #2D2520 100%);
+    border-radius: var(--radius);
+    margin: 0 20px 12px;
+    padding: 20px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  .result-card::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 120px; height: 120px;
+    background: var(--saffron);
+    opacity: 0.12;
+    border-radius: 50%;
+  }
+  .result-card-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ai-dot {
+    width: 6px; height: 6px;
+    background: var(--saffron);
+    border-radius: 50%;
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .result-metric { }
+  .result-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 3px;
+  }
+  .result-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: white;
+    line-height: 1;
+  }
+  .result-value.highlight { color: var(--saffron); }
+  .result-unit { font-size: 12px; font-weight: 400; }
+
+  .ai-insight {
+    background: rgba(255,255,255,0.07);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.5;
+    border-left: 2px solid var(--saffron);
+  }
+
+  /* ── RECIPE LIST CARD ── */
+  .recipe-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.12s;
+    border-bottom: 1px solid var(--cream-dark);
+  }
+  .recipe-list-item:last-child { border-bottom: none; }
+  .recipe-list-item:hover { background: var(--cream); }
+  .recipe-emoji {
+    width: 44px; height: 44px;
+    background: var(--saffron-light);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .recipe-info { flex: 1; }
+  .recipe-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+  .recipe-meta { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+  .recipe-price {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--saffron-dark);
+    text-align: right;
+  }
+  .recipe-price-label { font-size: 10px; color: var(--ink-muted); font-family: 'DM Sans', sans-serif; }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    padding: 0 20px 12px;
+  }
+  .stat-box {
+    background: white;
+    border-radius: var(--radius-sm);
+    padding: 12px 10px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .stat-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--ink);
+  }
+  .stat-label { font-size: 10px; color: var(--ink-muted); margin-top: 2px; }
+
+  /* ── LOADING ── */
+  .loading-state {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 20px;
+    gap: 12px;
+  }
+  .loading-state.visible { display: flex; }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--cream-dark);
+    border-top-color: var(--saffron);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 14px; color: var(--ink-muted); font-style: italic; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    text-align: center;
+    gap: 8px;
+  }
+  .empty-icon { font-size: 40px; }
+  .empty-title { font-size: 16px; font-weight: 600; color: var(--ink); }
+  .empty-desc { font-size: 13px; color: var(--ink-muted); line-height: 1.5; }
+
+  /* ── MARGIN SLIDER ── */
+  .slider-wrap { padding: 4px 0 8px; }
+  input[type=range] {
+    width: 100%;
+    height: 4px;
+    accent-color: var(--saffron);
+    cursor: pointer;
+  }
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--ink-muted);
+    margin-top: 4px;
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.25s;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ANIMATE IN */
+  .fade-in {
+    animation: fadeIn 0.3s ease forwards;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* SCROLLBAR */
+  .page::-webkit-scrollbar { width: 0; }
+  
+  /* Hero banner */
+  .hero-banner {
+    margin: 0 20px 14px;
+    background: var(--ink);
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-banner::after {
+    content: '🍳';
+    position: absolute;
+    right: 16px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 48px;
+    opacity: 0.2;
+  }
+  .hero-banner h3 {
+    font-family: 'DM Serif Display', serif;
+    color: white;
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+  .hero-banner p { color: rgba(255,255,255,0.55); font-size: 12px; line-height: 1.5; }
+  .hero-cta {
+    margin-top: 14px;
+    background: var(--saffron);
+    color: white;
+    border: none;
+    padding: 9px 16px;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .hero-cta:hover { background: var(--saffron-dark); }
+</style>
+</head>
+<body>
+<div class="phone-shell">
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="status-icons">
+      <span>●●●</span>
+      <span>WiFi</span>
+      <span>🔋</span>
+    </div>
+  </div>
+
+  <!-- APP HEADER -->
+  <div class="app-header">
+    <div class="logo">Chef<span>Custo</span></div>
+    <div class="header-badge">✦ IA Ativa</div>
+  </div>
+
+  <!-- ═══════ PAGE: INÍCIO ═══════ -->
+  <div class="page active" id="page-home">
+    <div class="hero-banner">
+      <h3>Precifique com precisão</h3>
+      <p>Insira sua receita e nossa IA calcula custo, rendimento e o preço ideal de venda.</p>
+      <button class="hero-cta" onclick="switchPage('calcular')">Calcular nova receita →</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-value" id="stat-recipes">0</div>
+        <div class="stat-label">Receitas</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="stat-ings">0</div>
+        <div class="stat-label">Insumos</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="stat-avg">—</div>
+        <div class="stat-label">Margem méd.</div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <h2>Suas fichas</h2>
+      <p>Receitas salvas e precificadas</p>
+    </div>
+
+    <div class="card" id="recipe-list-card">
+      <div id="recipe-list-container">
+        <div class="empty-state">
+          <div class="empty-icon">📄</div>
+          <div class="empty-title">Nenhuma ficha ainda</div>
+          <div class="empty-desc">Calcule sua primeira receita e ela aparecerá aqui.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ PAGE: CALCULAR ═══════ -->
+  <div class="page" id="page-calcular">
+    <div class="section-head">
+      <h2>Nova receita</h2>
+      <p>Preencha e a IA faz os cálculos</p>
+    </div>
+
+    <!-- RECEITA INFO -->
+    <div class="card">
+      <div class="card-inner">
+        <div class="form-group">
+          <label class="form-label">Nome da receita</label>
+          <input class="form-input" type="text" id="recipe-name" placeholder="Ex: Bolo de cenoura com cobertura">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Categoria</label>
+            <select class="form-input" id="recipe-category">
+              <option>Bolos e tortas</option>
+              <option>Salgados</option>
+              <option>Doces</option>
+              <option>Prato principal</option>
+              <option>Bebidas</option>
+              <option>Outros</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rendimento (und.)</label>
+            <input class="form-input" type="number" id="recipe-yield" placeholder="Ex: 12" min="1">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INGREDIENTES -->
+    <div class="card">
+      <div class="card-inner">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Ingredientes usados</div>
+            <div class="card-subtitle">Adicione um a um</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Ingrediente</label>
+          <input class="form-input" type="text" id="ing-name" placeholder="Ex: Farinha de trigo">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Qtd. usada</label>
+            <input class="form-input" type="number" id="ing-qty" placeholder="Ex: 300" min="0" step="0.1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unidade</label>
+            <select class="form-input" id="ing-unit">
+              <option value="g">g</option>
+              <option value="kg">kg</option>
+              <option value="ml">ml</option>
+              <option value="L">L</option>
+              <option value="un">un</option>
+              <option value="colher">colher</option>
+              <option value="xícara">xícara</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Preço pago (R$)</label>
+            <input class="form-input" type="number" id="ing-price" placeholder="Ex: 6,50" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Qtd. embalagem</label>
+            <input class="form-input" type="number" id="ing-pack" placeholder="Ex: 1000" min="0">
+          </div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="addIngredient()" style="width:100%;">
+          + Adicionar ingrediente
+        </button>
+
+        <div id="ingredients-list" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <!-- MARGEM E MÃO DE OBRA -->
+    <div class="card">
+      <div class="card-inner">
+        <div class="form-group">
+          <label class="form-label">Margem de lucro desejada: <strong id="margin-display">60%</strong></label>
+          <div class="slider-wrap">
+            <input type="range" min="10" max="300" value="60" id="margin-slider" oninput="updateMarginDisplay(this.value)">
+          </div>
+          <div class="slider-labels"><span>10%</span><span>150%</span><span>300%</span></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Mão de obra (R$/h)</label>
+            <input class="form-input" type="number" id="labor-hour" placeholder="Ex: 25,00" step="0.5" min="0" value="25">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Horas de preparo</label>
+            <input class="form-input" type="number" id="labor-hrs" placeholder="Ex: 2" step="0.5" min="0" value="1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Custo operacional (%)</label>
+          <input class="form-input" type="number" id="overhead" placeholder="Luz, gás, embalagem... Ex: 15" min="0" max="100" value="15">
+        </div>
+      </div>
+    </div>
+
+    <!-- LOADING -->
+    <div class="loading-state" id="loading-state">
+      <div class="spinner"></div>
+      <div class="loading-text">IA calculando sua ficha técnica...</div>
+    </div>
+
+    <!-- RESULT -->
+    <div id="result-section" style="display:none;">
+      <div class="result-card fade-in" id="result-card">
+        <div class="result-card-title">
+          <div class="ai-dot"></div>
+          Análise da IA — ChefCusto
+        </div>
+        <div class="result-grid">
+          <div class="result-metric">
+            <div class="result-label">Custo total</div>
+            <div class="result-value">R$ <span id="res-total">—</span></div>
+          </div>
+          <div class="result-metric">
+            <div class="result-label">Custo por porção</div>
+            <div class="result-value">R$ <span id="res-unit">—</span></div>
+          </div>
+          <div class="result-metric">
+            <div class="result-label">Rendimento</div>
+            <div class="result-value"><span id="res-yield">—</span> <span class="result-unit">und.</span></div>
+          </div>
+          <div class="result-metric">
+            <div class="result-label">Preço de venda</div>
+            <div class="result-value highlight">R$ <span id="res-price">—</span></div>
+          </div>
+        </div>
+        <div class="ai-insight" id="ai-insight">
+          Preencha a receita e clique em calcular para ver a análise da IA.
+        </div>
+      </div>
+      <div style="padding: 0 20px;">
+        <button class="btn btn-primary" onclick="saveRecipe()">💾 Salvar ficha técnica</button>
+      </div>
+    </div>
+
+    <div style="padding: 12px 20px 0;">
+      <button class="btn btn-primary" id="calc-btn" onclick="calculateRecipe()">
+        ✦ Calcular com IA
+      </button>
+    </div>
+    <div style="height: 20px;"></div>
+  </div>
+
+  <!-- ═══════ PAGE: INGREDIENTES ═══════ -->
+  <div class="page" id="page-ingredientes">
+    <div class="section-head">
+      <h2>Insumos</h2>
+      <p>Seu cadastro de ingredientes com preço</p>
+    </div>
+
+    <div class="card">
+      <div class="card-inner">
+        <div class="card-title" style="margin-bottom:12px;">Cadastrar insumo</div>
+        <div class="form-group">
+          <label class="form-label">Nome</label>
+          <input class="form-input" type="text" id="stock-name" placeholder="Ex: Açúcar cristal">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Preço (R$)</label>
+            <input class="form-input" type="number" id="stock-price" placeholder="Ex: 4,80" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Qtd. embalagem</label>
+            <input class="form-input" type="number" id="stock-qty" placeholder="Ex: 1000">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unidade</label>
+          <select class="form-input" id="stock-unit">
+            <option value="g">g (gramas)</option>
+            <option value="kg">kg (quilos)</option>
+            <option value="ml">ml (mililitros)</option>
+            <option value="L">L (litros)</option>
+            <option value="un">un (unidade)</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="addStock()">+ Cadastrar insumo</button>
+      </div>
+    </div>
+
+    <div class="card" id="stock-list-card">
+      <div id="stock-list">
+        <div class="empty-state">
+          <div class="empty-icon">🥚</div>
+          <div class="empty-title">Nenhum insumo cadastrado</div>
+          <div class="empty-desc">Cadastre seus ingredientes para usá-los nas receitas.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ PAGE: PERFIL ═══════ -->
+  <div class="page" id="page-perfil">
+    <div class="section-head">
+      <h2>Meu negócio</h2>
+      <p>Configurações e dados gerais</p>
+    </div>
+    <div class="card">
+      <div class="card-inner">
+        <div class="form-group">
+          <label class="form-label">Nome do negócio</label>
+          <input class="form-input" type="text" placeholder="Ex: Doceria da Ana" id="biz-name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Segmento</label>
+          <select class="form-input">
+            <option>Confeitaria / Bolos</option>
+            <option>Marmitex / Refeições</option>
+            <option>Salgados e lanches</option>
+            <option>Bebidas e sucos</option>
+            <option>Restaurante</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Meta de lucro/mês</label>
+            <input class="form-input" type="number" placeholder="R$ 3.000" id="profit-goal">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Horas/semana</label>
+            <input class="form-input" type="number" placeholder="40" id="hours-week">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveBizProfile()">Salvar perfil</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-inner">
+        <div class="card-title" style="margin-bottom:8px;">Sobre o ChefCusto</div>
+        <p style="font-size:13px; color:var(--ink-muted); line-height:1.6;">
+          Desenvolvido com a API Claude da Anthropic para cálculo inteligente de fichas técnicas. A IA analisa seus ingredientes, custos operacionais e margem de lucro para sugerir o preço ideal de venda.
+        </p>
+        <div style="margin-top:12px; display:flex; gap:8px;">
+          <span class="card-badge badge-saffron">Claude API</span>
+          <span class="card-badge badge-mint">React Native</span>
+          <span class="card-badge badge-terra">Supabase</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="nav-home" onclick="switchPage('home')">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Início</span>
+    </button>
+    <button class="nav-item" id="nav-calcular" onclick="switchPage('calcular')">
+      <span class="nav-icon">✦</span>
+      <span class="nav-label">Calcular</span>
+    </button>
+    <button class="nav-item" id="nav-ingredientes" onclick="switchPage('ingredientes')">
+      <span class="nav-icon">🧂</span>
+      <span class="nav-label">Insumos</span>
+    </button>
+    <button class="nav-item" id="nav-perfil" onclick="switchPage('perfil')">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Perfil</span>
+    </button>
+  </nav>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──
+let ingredients = [];  // {name, qty, unit, price, pack, costPer}
+let stockItems = [];
+let savedRecipes = [];
+
+// ── NAVIGATION ──
+function switchPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('nav-' + page).classList.add('active');
+  if (page === 'home') updateHomePage();
+}
+
+// ── MARGIN SLIDER ──
+function updateMarginDisplay(val) {
+  document.getElementById('margin-display').textContent = val + '%';
+}
+
+// ── ADD INGREDIENT TO RECIPE ──
+function addIngredient() {
+  const name  = document.getElementById('ing-name').value.trim();
+  const qty   = parseFloat(document.getElementById('ing-qty').value);
+  const unit  = document.getElementById('ing-unit').value;
+  const price = parseFloat(document.getElementById('ing-price').value);
+  const pack  = parseFloat(document.getElementById('ing-pack').value);
+
+  if (!name || isNaN(qty) || isNaN(price) || isNaN(pack) || pack === 0) {
+    showToast('Preencha todos os campos do ingrediente');
+    return;
+  }
+
+  const costPer = price / pack; // R$ por unidade base
+  const totalCost = costPer * qty;
+
+  ingredients.push({ name, qty, unit, price, pack, costPer, totalCost });
+  renderIngredients();
+
+  // Clear
+  ['ing-name','ing-qty','ing-price','ing-pack'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('ing-unit').value = 'g';
+}
+
+function removeIngredient(idx) {
+  ingredients.splice(idx, 1);
+  renderIngredients();
+}
+
+function renderIngredients() {
+  const container = document.getElementById('ingredients-list');
+  if (ingredients.length === 0) { container.innerHTML = ''; return; }
+
+  container.innerHTML = ingredients.map((ing, i) => `
+    <div class="ingredient-item">
+      <div class="ing-info">
+        <div class="ing-name">${ing.name}</div>
+        <div class="ing-detail">${ing.qty}${ing.unit} · R$ ${ing.costPer.toFixed(4)}/${ing.unit}</div>
+      </div>
+      <span class="ing-cost">R$ ${ing.totalCost.toFixed(2)}</span>
+      <button class="ing-remove" onclick="removeIngredient(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+// ── CALCULATE WITH AI ──
+async function calculateRecipe() {
+  const name = document.getElementById('recipe-name').value.trim();
+  const yieldVal = parseInt(document.getElementById('recipe-yield').value) || 1;
+  const margin = parseInt(document.getElementById('margin-slider').value);
+  const laborHour = parseFloat(document.getElementById('labor-hour').value) || 0;
+  const laborHrs  = parseFloat(document.getElementById('labor-hrs').value) || 0;
+  const overhead  = parseFloat(document.getElementById('overhead').value) || 0;
+
+  if (!name) { showToast('Dê um nome à sua receita'); return; }
+  if (ingredients.length === 0) { showToast('Adicione pelo menos 1 ingrediente'); return; }
+
+  // Scroll to loading
+  document.getElementById('calc-btn').style.display = 'none';
+  document.getElementById('loading-state').classList.add('visible');
+  document.getElementById('result-section').style.display = 'none';
+
+  // Build prompt for Claude
+  const ingList = ingredients.map(i =>
+    `- ${i.name}: ${i.qty}${i.unit} (custo total: R$ ${i.totalCost.toFixed(2)})`
+  ).join('\n');
+
+  const totalIngredientCost = ingredients.reduce((s, i) => s + i.totalCost, 0);
+  const laborCost = laborHour * laborHrs;
+  const overheadCost = (totalIngredientCost + laborCost) * (overhead / 100);
+  const totalCost = totalIngredientCost + laborCost + overheadCost;
+  const costPerUnit = totalCost / yieldVal;
+  const salePrice = costPerUnit * (1 + margin / 100);
+
+  const prompt = `Você é um consultor especialista em precificação para pequenos negócios de alimentação no Brasil.
+
+Analise esta ficha técnica:
+- Receita: "${name}"
+- Rendimento: ${yieldVal} porções/unidades
+- Ingredientes:
+${ingList}
+- Custo total de insumos: R$ ${totalIngredientCost.toFixed(2)}
+- Mão de obra: R$ ${laborCost.toFixed(2)} (${laborHrs}h × R$ ${laborHour}/h)
+- Custos operacionais (${overhead}%): R$ ${overheadCost.toFixed(2)}
+- Custo total: R$ ${totalCost.toFixed(2)}
+- Custo por porção: R$ ${costPerUnit.toFixed(2)}
+- Margem de lucro desejada: ${margin}%
+- Preço de venda calculado: R$ ${salePrice.toFixed(2)}
+
+Retorne SOMENTE um JSON válido (sem markdown, sem texto extra) com este formato exato:
+{
+  "insight": "Uma frase curta (máx 2 frases) com dica prática sobre essa receita — se o preço está competitivo, como reduzir custo, ou se a margem é adequada para o mercado brasileiro. Seja direto e útil.",
+  "ok": true
+}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '{}';
+    let parsed = {};
+    try {
+      const clean = text.replace(/```json|```/g, '').trim();
+      parsed = JSON.parse(clean);
+    } catch(e) {
+      parsed = { insight: 'Ficha técnica calculada com sucesso! Revise os valores e ajuste conforme seu mercado local.' };
+    }
+
+    showResults({
+      total: totalCost,
+      unit: costPerUnit,
+      yield: yieldVal,
+      price: salePrice,
+      insight: parsed.insight || 'Cálculo realizado com sucesso.'
+    });
+
+  } catch (err) {
+    // Fallback calc sem IA
+    showResults({
+      total: totalCost,
+      unit: costPerUnit,
+      yield: yieldVal,
+      price: salePrice,
+      insight: `Custo calculado localmente. Preço de venda sugerido com margem de ${margin}% sobre o custo total (insumos + mão de obra + operacional).`
+    });
+  }
+}
+
+function showResults(data) {
+  document.getElementById('loading-state').classList.remove('visible');
+  document.getElementById('result-section').style.display = 'block';
+  document.getElementById('calc-btn').style.display = 'flex';
+
+  document.getElementById('res-total').textContent = data.total.toFixed(2);
+  document.getElementById('res-unit').textContent  = data.unit.toFixed(2);
+  document.getElementById('res-yield').textContent = data.yield;
+  document.getElementById('res-price').textContent = data.price.toFixed(2);
+  document.getElementById('ai-insight').textContent = data.insight;
+
+  document.getElementById('result-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  window._lastResult = data;
+}
+
+// ── SAVE RECIPE ──
+function saveRecipe() {
+  const name = document.getElementById('recipe-name').value.trim() || 'Receita sem nome';
+  const category = document.getElementById('recipe-category').value;
+  const data = window._lastResult;
+  if (!data) { showToast('Calcule primeiro!'); return; }
+
+  const emojis = {'Bolos e tortas':'🎂','Salgados':'🥐','Doces':'🍬','Prato principal':'🍽️','Bebidas':'🥤','Outros':'🍳'};
+  const emoji = emojis[category] || '🍳';
+
+  savedRecipes.push({
+    name, category, emoji,
+    price: data.price,
+    unit: data.unit,
+    total: data.total,
+    yield: data.yield,
+    date: new Date().toLocaleDateString('pt-BR')
+  });
+
+  showToast('Ficha salva com sucesso! ✓');
+  updateHomePage();
+
+  // Reset
+  document.getElementById('recipe-name').value = '';
+  document.getElementById('recipe-yield').value = '';
+  ingredients = [];
+  renderIngredients();
+  document.getElementById('result-section').style.display = 'none';
+}
+
+// ── UPDATE HOME ──
+function updateHomePage() {
+  document.getElementById('stat-recipes').textContent = savedRecipes.length;
+  document.getElementById('stat-ings').textContent = stockItems.length;
+
+  if (savedRecipes.length > 0) {
+    const avgMargin = savedRecipes.reduce((s, r) => s + ((r.price - r.unit) / r.unit * 100), 0) / savedRecipes.length;
+    document.getElementById('stat-avg').textContent = Math.round(avgMargin) + '%';
+  }
+
+  const container = document.getElementById('recipe-list-container');
+  if (savedRecipes.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📄</div>
+        <div class="empty-title">Nenhuma ficha ainda</div>
+        <div class="empty-desc">Calcule sua primeira receita e ela aparecerá aqui.</div>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = savedRecipes.map((r, i) => `
+    <div class="recipe-list-item">
+      <div class="recipe-emoji">${r.emoji}</div>
+      <div class="recipe-info">
+        <div class="recipe-name">${r.name}</div>
+        <div class="recipe-meta">${r.category} · ${r.yield} und. · ${r.date}</div>
+      </div>
+      <div>
+        <div class="recipe-price">R$ ${r.price.toFixed(2)}</div>
+        <div class="recipe-price-label">por unidade</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── STOCK MANAGEMENT ──
+function addStock() {
+  const name  = document.getElementById('stock-name').value.trim();
+  const price = parseFloat(document.getElementById('stock-price').value);
+  const qty   = parseFloat(document.getElementById('stock-qty').value);
+  const unit  = document.getElementById('stock-unit').value;
+
+  if (!name || isNaN(price) || isNaN(qty) || qty === 0) {
+    showToast('Preencha todos os campos'); return;
+  }
+
+  const unitPrice = price / qty;
+  stockItems.push({ name, price, qty, unit, unitPrice });
+  renderStock();
+  showToast('Insumo cadastrado! ✓');
+
+  ['stock-name','stock-price','stock-qty'].forEach(id => document.getElementById(id).value = '');
+}
+
+function removeStock(idx) {
+  stockItems.splice(idx, 1);
+  renderStock();
+}
+
+function renderStock() {
+  const container = document.getElementById('stock-list');
+  if (stockItems.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🥚</div>
+        <div class="empty-title">Nenhum insumo cadastrado</div>
+        <div class="empty-desc">Cadastre seus ingredientes para usá-los nas receitas.</div>
+      </div>`;
+    return;
+  }
+  container.innerHTML = stockItems.map((s, i) => `
+    <div class="ingredient-item">
+      <div class="ing-info">
+        <div class="ing-name">${s.name}</div>
+        <div class="ing-detail">R$ ${s.price.toFixed(2)} / ${s.qty}${s.unit} · <strong>R$ ${s.unitPrice.toFixed(4)}/${s.unit}</strong></div>
+      </div>
+      <button class="ing-remove" onclick="removeStock(${i})">✕</button>
+    </div>
+  `).join('');
+  document.getElementById('stat-ings').textContent = stockItems.length;
+}
+
+// ── BIZ PROFILE ──
+function saveBizProfile() {
+  showToast('Perfil salvo! ✓');
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── PRE-LOAD EXAMPLE DATA ──
+stockItems = [
+  { name: 'Farinha de trigo', price: 5.99, qty: 1000, unit: 'g', unitPrice: 0.00599 },
+  { name: 'Açúcar cristal',   price: 4.49, qty: 1000, unit: 'g', unitPrice: 0.00449 },
+  { name: 'Ovos',             price: 14.90, qty: 12,  unit: 'un', unitPrice: 1.2417  },
+  { name: 'Manteiga',         price: 12.90, qty: 200,  unit: 'g', unitPrice: 0.0645  },
+];
+renderStock();
+updateHomePage();
+</script>
+</body>
+</html>
