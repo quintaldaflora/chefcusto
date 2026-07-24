@@ -751,7 +751,7 @@
 
     <div class="card">
       <div class="card-inner">
-        <div class="card-title" style="margin-bottom:12px;">Cadastrar insumo manualmente</div>
+        <div class="card-title" id="stock-form-title" style="margin-bottom:12px;">Cadastrar insumo manualmente</div>
         <div class="form-group">
           <label class="form-label">Nome</label>
           <input class="form-input" type="text" id="stock-name" placeholder="Ex: Açúcar cristal">
@@ -776,7 +776,8 @@
             <option value="un">un (unidade)</option>
           </select>
         </div>
-        <button class="btn btn-primary" onclick="addStock()">+ Cadastrar insumo</button>
+        <button class="btn btn-primary" id="stock-form-btn" onclick="saveStock()">+ Cadastrar insumo</button>
+        <button class="btn btn-outline" id="stock-form-cancel" onclick="cancelEditStock()" style="width:100%; margin-top:8px; display:none;">Cancelar edição</button>
       </div>
     </div>
 
@@ -1488,7 +1489,7 @@ async function confirmInvoiceItems() {
 }
 
 // ── STOCK MANAGEMENT (grava na aba Insumos da planilha) ──
-async function addStock() {
+async function saveStock() {
   const name  = document.getElementById('stock-name').value.trim();
   const price = parseFloat(document.getElementById('stock-price').value);
   const qty   = parseFloat(document.getElementById('stock-qty').value);
@@ -1498,14 +1499,52 @@ async function addStock() {
     showToast('Preencha todos os campos'); return;
   }
 
+  const isEditing = !!window._editingInsumoId;
+  const btn = document.getElementById('stock-form-btn');
+  btn.disabled = true;
+  btn.textContent = isEditing ? 'Salvando alterações...' : 'Cadastrando...';
+
   try {
-    await apiPost({ action: 'add_insumo', nome: name, preco: price, qtd: qty, unidade: unit });
-    showToast('Insumo cadastrado na planilha! ✓');
+    if (isEditing) {
+      await apiPost({ action: 'update_insumo', insumoId: window._editingInsumoId, nome: name, preco: price, qtd: qty, unidade: unit });
+      showToast('Insumo atualizado! ✓');
+    } else {
+      await apiPost({ action: 'add_insumo', nome: name, preco: price, qtd: qty, unidade: unit });
+      showToast('Insumo cadastrado na planilha! ✓');
+    }
     await loadInsumos();
-    ['stock-name','stock-price','stock-qty'].forEach(id => document.getElementById(id).value = '');
+    cancelEditStock();
   } catch (e) {
-    showToast('Erro ao cadastrar. Verifique sua conexão.');
+    showToast('Erro ao salvar. Verifique sua conexão.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = window._editingInsumoId ? '💾 Salvar alterações' : '+ Cadastrar insumo';
   }
+}
+
+function editStock(id) {
+  const item = stockItems.find(s => String(s.id) === String(id));
+  if (!item) return;
+
+  document.getElementById('stock-name').value = item.name;
+  document.getElementById('stock-price').value = item.price;
+  document.getElementById('stock-qty').value = item.qty;
+  document.getElementById('stock-unit').value = item.unit;
+
+  window._editingInsumoId = id;
+  document.getElementById('stock-form-title').textContent = 'Editando: ' + item.name;
+  document.getElementById('stock-form-btn').textContent = '💾 Salvar alterações';
+  document.getElementById('stock-form-cancel').style.display = 'block';
+  document.getElementById('stock-form-title').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function cancelEditStock() {
+  window._editingInsumoId = null;
+  document.getElementById('stock-form-title').textContent = 'Cadastrar insumo manualmente';
+  document.getElementById('stock-form-btn').textContent = '+ Cadastrar insumo';
+  document.getElementById('stock-form-cancel').style.display = 'none';
+  ['stock-name','stock-price','stock-qty'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('stock-unit').value = 'g';
 }
 
 async function removeStock(id, name) {
@@ -1539,6 +1578,7 @@ function renderStock() {
         <div class="ing-name">${s.name}</div>
         <div class="ing-detail">R$ ${price.toFixed(2)} / ${s.qty}${s.unit} · <strong>R$ ${unitPrice.toFixed(4)}/${s.unit}</strong></div>
       </div>
+      <button class="ing-remove" onclick="editStock('${s.id}')" style="margin-right:2px;">✎</button>
       <button class="ing-remove" onclick="removeStock('${s.id}', '${s.name.replace(/'/g, "\\'")}')">✕</button>
     </div>
   `;
