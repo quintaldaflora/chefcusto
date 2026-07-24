@@ -1001,9 +1001,14 @@ async function apiGetWithRetry(action, tries = 2) {
 async function loadInsumos() {
   try {
     const data = await apiGetWithRetry('insumos');
-    stockItems = (data || []).map(i => ({
-      id: i.id, name: i.nome, price: i.preco, qty: i.qtd, unit: i.unidade, unitPrice: i.custoUnit
-    }));
+    stockItems = (data || []).map(i => {
+      const price = Number(i.preco) || 0;
+      const qty = Number(i.qtd) || 0;
+      // Recalcula na hora se a planilha não trouxer o custo por unidade (ex: linhas
+      // adicionadas fora do alcance das fórmulas originais da planilha)
+      const unitPrice = Number(i.custoUnit) || (qty ? price / qty : 0);
+      return { id: i.id, name: i.nome, price, qty, unit: i.unidade, unitPrice };
+    });
   } catch (e) {
     showToast('Não foi possível carregar os insumos. Puxe a tela para atualizar.');
   }
@@ -1135,7 +1140,7 @@ function populateIngredientSelect() {
   const sel = document.getElementById('ing-select');
   const current = sel.value;
   sel.innerHTML = '<option value="">Selecione um insumo...</option>' +
-    stockItems.map(s => `<option value="${s.id}">${s.name} (R$ ${s.unitPrice.toFixed(4)}/${s.unit})</option>`).join('');
+    stockItems.map(s => `<option value="${s.id}">${s.name} (R$ ${(Number(s.unitPrice) || 0).toFixed(4)}/${s.unit})</option>`).join('');
   if (current) sel.value = current;
 }
 
@@ -1525,15 +1530,19 @@ function renderStock() {
       </div>`;
     return;
   }
-  container.innerHTML = stockItems.map((s, i) => `
+  container.innerHTML = stockItems.map((s, i) => {
+    const price = Number(s.price) || 0;
+    const unitPrice = Number(s.unitPrice) || 0;
+    return `
     <div class="ingredient-item">
       <div class="ing-info">
         <div class="ing-name">${s.name}</div>
-        <div class="ing-detail">R$ ${s.price.toFixed(2)} / ${s.qty}${s.unit} · <strong>R$ ${s.unitPrice.toFixed(4)}/${s.unit}</strong></div>
+        <div class="ing-detail">R$ ${price.toFixed(2)} / ${s.qty}${s.unit} · <strong>R$ ${unitPrice.toFixed(4)}/${s.unit}</strong></div>
       </div>
       <button class="ing-remove" onclick="removeStock('${s.id}', '${s.name.replace(/'/g, "\\'")}')">✕</button>
     </div>
-  `).join('');
+  `;
+  }).join('');
   document.getElementById('stat-ings').textContent = stockItems.length;
 }
 
